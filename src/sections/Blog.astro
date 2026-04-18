@@ -1,0 +1,44 @@
+---
+import { getCollection } from "astro:content";
+import BlogEntry from "../components/BlogEntry.astro";
+
+const allBlogPosts = (await getCollection("blog")).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+const BLOG_ROUTE = "/blog/";
+---
+
+<section class="section-flex">
+  <div id="blog-box" box-="square" shear-="top">
+    <div class="header">
+      <span id="blog-box-heading">blog</span>
+    </div>
+    {
+      allBlogPosts.map((post) => {
+        return (
+          <BlogEntry
+            title={post.data.title}
+            slug={`${BLOG_ROUTE}${post.id}`}
+            timeToRead={0}
+          />
+        );
+      })
+    }
+  </div>
+</section>
+<style>
+  #blog-box {
+    display: flex;
+    width: 45%;
+    min-height: 5lh;
+    flex-direction: column;
+  }
+  #blog-box-heading {
+    font-weight: 600;
+  }
+
+  span {
+    background-color: var(--background0);
+    padding: 0 1ch;
+  }
+</style>

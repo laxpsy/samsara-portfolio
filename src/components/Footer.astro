@@ -1,0 +1,53 @@
+---
+interface Props {
+  filename: string;
+}
+
+const { filename } = Astro.props;
+---
+
+<footer class="footer-col-flex">
+  <div class="footer-items-parent-row">
+    <div class="footer-items-child-row">
+      <span is-="badge" variant-="blue">NORMAL</span>
+      <span is-="badge" variant-="background2"> master</span>
+      <p>{filename}</p>
+    </div>
+    <div class="footer-items-child-row">
+      <p>utf-8</p>
+      <span is-="badge" variant-="blue">Top</span>
+      <span is-="badge" variant-="blue">1:1</span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  footer {
+    font-size: 3ch;
+  }
+
+  footer p {
+    font-size: 2.2ch;
+  }
+
+  .footer-col-flex {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0.5ch;
+    background-color: var(--mantle);
+  }
+
+  .footer-items-parent-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .footer-items-child-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    gap: 1ch;
+  }
+</style>

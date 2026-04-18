@@ -1,0 +1,29 @@
+@layer base, utils, components;
+
+@import "@webtui/css/base.css";
+
+@import "@webtui/css/components/typography.css";
+@import "@webtui/css/components/button.css";
+@import "@webtui/css/components/pre.css";
+@import "@webtui/css/components/badge.css";
+@import "@webtui/css/components/button.css";
+@import "@webtui/css/utils/box.css";
+
+@import "@webtui/theme-catppuccin";
+@import "@webtui/plugin-nf";
+
+@layer base {
+  :root {
+    --font-size: 18px;
+    --font-family: "JetBrainsMono", monospace, "Symbols Nerd Font";
+  }
+}
+
+.section-flex {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: center;
+  gap: 2lh;
+}

@@ -1,0 +1,27 @@
+---
+interface Props {
+  title: string;
+  timeToRead: number;
+  slug: string;
+}
+
+const blogEntryProps = Astro.props;
+---
+
+<div class="blog-entry-parent-flex">
+  <a href={blogEntryProps.slug}>...{blogEntryProps.title}</a>
+  <p>{blogEntryProps.timeToRead}</p>
+</div>
+
+<style>
+  .blog-entry-parent-flex {
+    display: flex;
+    padding: 0 1ch;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .blog-entry-parent-flex a {
+    color: var(--lavender);
+  }
+</style>

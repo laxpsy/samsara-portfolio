@@ -1,0 +1,52 @@
+---
+const pathname: string = Astro.url.pathname;
+---
+
+<nav>
+  <a href="/" aria-current={pathname === "/" ? "page" : undefined}>~</a>
+  <p>|</p>
+  <a
+    href="/portfolio"
+    aria-current={pathname === "/portfolio" ? "page" : undefined}>portfolio</a
+  >
+  <p>|</p>
+  <a href="/now" aria-current={pathname === "/now" ? "page" : undefined}>now</a>
+</nav>
+
+<style>
+  nav {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    height: 3ch;
+    gap: 2ch;
+    padding: 1ch;
+    font-size: 2.5ch;
+    background-color: var(--mantle);
+  }
+
+  nav a {
+    color: var(--white);
+    text-decoration: none;
+  }
+
+  nav a::first-letter {
+    color: var(--mauve);
+  }
+
+  nav a[aria-current="page"] {
+    font-weight: 600;
+    color: var(--rosewater);
+  }
+</style>
+
+<script>
+  import { navigate } from "astro:transitions/client";
+  document.addEventListener("keydown", (event) => {
+    if (event.key == "h" || event.key == "Escape") navigate("/");
+    else if (event.key == "p") navigate("/portfolio");
+    else if (event.key == "n") navigate("/now");
+  });
+</script>

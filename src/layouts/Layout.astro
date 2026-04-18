@@ -1,23 +1,47 @@
+---
+import Head from "../components/Head.astro";
+import Footer from "../components/Footer.astro";
+import Navbar from "../components/Navbar.astro";
+import "../style/global.css";
+interface Props {
+  filename: string;
+}
+
+const { filename } = Astro.props;
+---
+
 <!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
-	</head>
-	<body>
-		<slot />
-	</body>
+<html data-webtui-theme="catppuccin-mocha" lang="en">
+  <Head />
+  <body>
+    <Navbar />
+    <main>
+      <slot />
+    </main>
+    <Footer filename={filename} />
+  </body>
 </html>
 
 <style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 100svh;
+    margin: 0ch auto;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
+  }
+
+  main {
+    flex: 1;
+    padding: 3ch 2ch;
+    width: 100%;
+  }
 </style>
