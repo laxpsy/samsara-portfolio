@@ -8,6 +8,7 @@ const allBlogPosts = (await getCollection("blog")).sort(
 const BLOG_ROUTE = "/blog/";
 ---
 
+<!-- TODO: pagination -->
 <section class="section-flex">
   <div id="blog-box" box-="square" shear-="top">
     <div class="header">
@@ -33,8 +34,13 @@ const BLOG_ROUTE = "/blog/";
     min-height: 5lh;
     flex-direction: column;
   }
+
   #blog-box-heading {
     font-weight: 600;
+  }
+
+  #blog-box .selected {
+    color: var(--mauve);
   }
 
   span {
@@ -42,3 +48,15 @@ const BLOG_ROUTE = "/blog/";
     padding: 0 1ch;
   }
 </style>
+
+<script>
+  let blogMode: boolean = false;
+  let modeDiv = document.getElementById("mode");
+  import { navigate } from "astro:transitions/client";
+  document.addEventListener("keydown", (event) => {
+    if (event.key == "b") {
+      blogMode = true;
+      modeDiv?.textContent == "BLOG";
+    }
+  });
+</script>

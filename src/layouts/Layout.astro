@@ -45,3 +45,59 @@ const { filename } = Astro.props;
     width: 100%;
   }
 </style>
+
+<script>
+  // TODO: scroll selected entry via j/k in blog mode
+  import { navigate } from "astro:transitions/client";
+  const pathName = window.location.pathname;
+  console.log(pathName);
+
+  type VimMode = "NORMAL" | "BLOG";
+
+  let modeElement = document.getElementById("vim-mode");
+  let currentMode: VimMode = "NORMAL";
+  let blogEntries = document.querySelectorAll(".blog-entry-parent-flex");
+
+  // define a custom event to handle mode changes async
+  const NormalModeChangeEvent = new CustomEvent<VimMode>("MODE_CHANGE", {
+    detail: "NORMAL",
+  });
+
+  const BlogModeChangeEvent = new CustomEvent<VimMode>("MODE_CHANGE", {
+    detail: "BLOG",
+  });
+
+  document.addEventListener("MODE_CHANGE", ((event: CustomEvent) => {
+    if (event.detail == "NORMAL") {
+      if (modeElement) modeElement.textContent = "NORMAL";
+    } else {
+      if (modeElement) modeElement.textContent = "BLOG";
+    }
+  }) as EventListener);
+
+  document.addEventListener("keydown", (event) => {
+    let pressedKey = event.key;
+    switch (pressedKey) {
+      case "p":
+        if (pathName != "/portfolio") navigate("/portfolio");
+        break;
+      case "n":
+        if (pathName != "/now") navigate("/now");
+        break;
+      case "b":
+        if (pathName == "/" && currentMode == "NORMAL") {
+          currentMode = "BLOG";
+          document.dispatchEvent(BlogModeChangeEvent);
+        }
+        break;
+      case "Escape":
+        if (pathName == "/" && currentMode == "BLOG") {
+          currentMode = "NORMAL";
+          document.dispatchEvent(NormalModeChangeEvent);
+        } else {
+          navigate("/");
+        }
+        break;
+    }
+  });
+</script>

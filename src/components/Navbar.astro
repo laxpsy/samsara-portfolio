@@ -41,12 +41,3 @@ const pathname: string = Astro.url.pathname;
     color: var(--rosewater);
   }
 </style>
-
-<script>
-  import { navigate } from "astro:transitions/client";
-  document.addEventListener("keydown", (event) => {
-    if (event.key == "h" || event.key == "Escape") navigate("/");
-    else if (event.key == "p") navigate("/portfolio");
-    else if (event.key == "n") navigate("/now");
-  });
-</script>
