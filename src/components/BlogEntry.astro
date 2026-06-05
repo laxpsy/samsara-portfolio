@@ -1,7 +1,7 @@
 ---
 interface Props {
   title: string;
-  timeToRead: number;
+  dateOfPublication: string;
   slug: string;
 }
 
@@ -10,7 +10,7 @@ const blogEntryProps = Astro.props;
 
 <div class="blog-entry-parent-flex">
   <a href={blogEntryProps.slug}>...{blogEntryProps.title}</a>
-  <p>{blogEntryProps.timeToRead}</p>
+  <p>{blogEntryProps.dateOfPublication}</p>
 </div>
 
 <style>

@@ -11,9 +11,31 @@ export async function getStaticPaths() {
   }));
 }
 const { post } = Astro.props;
-const { Content } = await render(post);
+const { Content, remarkPluginFrontmatter } = await render(post);
 ---
 
-<Layout filename={`${post.id}.astro`}>
-  <Content />
+<Layout title={post.data.title} filename={`${post.id}.astro`}>
+  <div class="blog-header">
+    <h1 style="font-size: 2ch; justify-self:center;">
+      {post.data.title}
+    </h1>
+    <p style="font-size:1.5ch;">
+      {remarkPluginFrontmatter.minutesRead}
+    </p>
+  </div>
+  <hr />
+  <br />
+  <div class="prose">
+    <Content />
+  </div>
 </Layout>
+
+<style>
+  .blog-header {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+  }
+</style>

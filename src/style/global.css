@@ -1,13 +1,13 @@
 @layer base, utils, components;
 
 @import "@webtui/css/base.css";
-
 @import "@webtui/css/components/typography.css";
 @import "@webtui/css/components/button.css";
 @import "@webtui/css/components/pre.css";
 @import "@webtui/css/components/badge.css";
-@import "@webtui/css/components/button.css";
 @import "@webtui/css/utils/box.css";
+@import "@webtui/css/components/table.css";
+@import "@webtui/css/components/checkbox.css";
 
 @import "@webtui/theme-catppuccin";
 @import "@webtui/plugin-nf";
@@ -26,4 +26,96 @@
   justify-content: start;
   align-items: center;
   gap: 2lh;
+}
+
+.selected {
+  background-color: color-mix(in srgb, var(--mauve), transparent 80%);
+  color: var(--white);
+}
+
+.prose {
+  max-width: 90ch;
+  margin-inline: auto;
+}
+
+.prose h1 {
+  font-size: 2.4ch;
+}
+
+.prose h2 {
+  font-size: 1.8ch;
+}
+
+.prose th {
+  color: var(--yellow);
+}
+
+.prose :where(h3, h4, h5, h6) {
+  font-size: 1.5ch;
+}
+
+.prose :where(p, li, pre, td) {
+  font-size: 1.5ch;
+}
+
+.prose pre:has(code) {
+  padding: 0.8lh 1ch;
+  font-size: 1.8ch;
+}
+
+.prose p code {
+  padding: 0ch 0.5ch;
+}
+
+.prose blockquote {
+  padding: 0.3lh 1ch;
+  font-size: 1.8ch;
+}
+
+/* stupid hacks */
+.prose blockquote p {
+  color: var(--yellow);
+}
+
+.prose blockquote blockquote p {
+  color: var(--peach);
+}
+
+.prose blockquote::before {
+  background-color: color-mix(in srgb, var(--yellow), transparent 50%);
+}
+
+.prose blockquote blockquote::before {
+  background-color: color-mix(in srgb, var(--peach), transparent 50%);
+}
+
+.prose ol {
+  list-style-position: outside;
+  padding-inline-start: 3ch;
+}
+
+.prose
+  :where(h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote, pre, table, hr, section)
+  + :where(
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    p,
+    ul,
+    ol,
+    blockquote,
+    pre,
+    table,
+    hr,
+    section
+  ) {
+  margin-block-start: 0.7lh;
+}
+
+.prose .footnotes {
+  background-color: color-mix(in srgb, var(--background1), transparent 80%);
+  border: 2px solid color-mix(in srgb, var(--background2), transparent 80%);
 }

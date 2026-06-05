@@ -6,33 +6,47 @@ const allBlogPosts = (await getCollection("blog")).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
 const BLOG_ROUTE = "/blog/";
+const PAGINATION_SIZE = 7;
 ---
 
-<!-- TODO: pagination -->
 <section class="section-flex">
-  <div id="blog-box" box-="square" shear-="top">
+  <div id="blog-box" box-="square" data-pagination-index={1} shear-="both">
     <div class="header">
       <span id="blog-box-heading">blog</span>
     </div>
     {
-      allBlogPosts.map((post) => {
+      allBlogPosts.map((post, index) => {
         return (
-          <BlogEntry
-            title={post.data.title}
-            slug={`${BLOG_ROUTE}${post.id}`}
-            timeToRead={0}
-          />
+          <div
+            class="blog-entry-parent-flex-wrapper"
+            data-page={Math.floor(index / PAGINATION_SIZE) + 1}
+          >
+            <BlogEntry
+              title={post.data.title}
+              slug={`${BLOG_ROUTE}${post.id}`}
+              dateOfPublication={post.data.pubDate.toLocaleDateString()}
+            />
+          </div>
         );
       })
     }
+    <div id="blog-box-footer-div" style="align-self:end; gap:0">
+      <span id="blog-box-footer"
+        >&lt;<span id="page-number-current" style="font-weight:600">1</span
+        >&sol;<span id="page-number-last" style="font-weight:600">1</span
+        >&gt;</span
+      >
+    </div>
   </div>
 </section>
 <style>
   #blog-box {
     display: flex;
     width: 45%;
-    min-height: 5lh;
+    min-height: 3lh;
     flex-direction: column;
+    gap: 0.2ch;
+    font-size: 1.5ch;
   }
 
   #blog-box-heading {
@@ -43,20 +57,67 @@ const BLOG_ROUTE = "/blog/";
     color: var(--mauve);
   }
 
-  span {
+  #blog-box-heading {
+    background-color: var(--background0);
+    padding: 0 1ch;
+  }
+  #blog-box-footer {
     background-color: var(--background0);
     padding: 0 1ch;
   }
 </style>
 
 <script>
-  let blogMode: boolean = false;
-  let modeDiv = document.getElementById("mode");
-  import { navigate } from "astro:transitions/client";
-  document.addEventListener("keydown", (event) => {
-    if (event.key == "b") {
-      blogMode = true;
-      modeDiv?.textContent == "BLOG";
+  let dataPaginationIndex = 1;
+  const blogBox = document.getElementById("blog-box");
+  const blogEntries = blogBox?.querySelectorAll<HTMLElement>("[data-page]");
+  const pageNumberCurrent = document.getElementById("page-number-current");
+  const pageNumberLast = document.getElementById("page-number-last");
+
+  if (pageNumberLast && blogEntries) {
+    const lastPage = Math.max(
+      ...Array.from(blogEntries, (blogEntry) =>
+        Number((blogEntry as HTMLElement).dataset.page),
+      ),
+    );
+    if (lastPage != 1) pageNumberLast.innerText = lastPage.toString();
+    else {
+      const blogFooter = document.getElementById("blog-box-footer-div");
+      blogFooter.style = "visibility:hidden";
     }
+  }
+
+  const updateVisiblePosts = () => {
+    if (pageNumberCurrent)
+      pageNumberCurrent.innerText = dataPaginationIndex.toString();
+    if (blogEntries)
+      blogEntries.forEach((blogEntry) => {
+        blogEntry.style.display =
+          parseInt(blogEntry.dataset.page ? blogEntry.dataset.page : "0") ===
+          dataPaginationIndex
+            ? ""
+            : "none";
+      });
+  };
+
+  updateVisiblePosts();
+
+  const paginationObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (
+        mutation.type === "attributes" &&
+        mutation.attributeName === "data-pagination-index"
+      ) {
+        if (blogBox && blogBox.dataset.paginationIndex) {
+          dataPaginationIndex = parseInt(blogBox.dataset.paginationIndex);
+        }
+        updateVisiblePosts();
+      }
+    });
+  });
+
+  paginationObserver.observe(blogBox as Node, {
+    attributes: true,
+    attributeFilter: ["data-pagination-index"],
   });
 </script>

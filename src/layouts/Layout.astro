@@ -5,14 +5,15 @@ import Navbar from "../components/Navbar.astro";
 import "../style/global.css";
 interface Props {
   filename: string;
+  title: string;
 }
 
-const { filename } = Astro.props;
+const { filename, title = "Samsara" } = Astro.props;
 ---
 
 <!doctype html>
 <html data-webtui-theme="catppuccin-mocha" lang="en">
-  <Head />
+  <Head title={title} />
   <body>
     <Navbar />
     <main>
@@ -25,7 +26,6 @@ const { filename } = Astro.props;
 <style>
   html,
   body {
-    margin: 0;
     width: 100%;
     height: 100%;
     min-height: 100svh;
@@ -47,16 +47,54 @@ const { filename } = Astro.props;
 </style>
 
 <script>
-  // TODO: scroll selected entry via j/k in blog mode
   import { navigate } from "astro:transitions/client";
-  const pathName = window.location.pathname;
-  console.log(pathName);
 
   type VimMode = "NORMAL" | "BLOG";
 
   let modeElement = document.getElementById("vim-mode");
+  let blogBox = document.getElementById("blog-box");
+  let blogEntries = document.querySelectorAll(
+    ".blog-entry-parent-flex-wrapper",
+  );
+
+  const lastPage =
+    blogEntries.length > 0
+      ? Math.max(
+          ...Array.from(blogEntries, (blogEntry) =>
+            Number((blogEntry as HTMLElement).dataset.page),
+          ),
+        )
+      : 0;
+
   let currentMode: VimMode = "NORMAL";
-  let blogEntries = document.querySelectorAll(".blog-entry-parent-flex");
+  let currentIndex = 0;
+  let currentPage = 1;
+
+  const clampedPage = (currentPage: number) => {
+    if (currentPage <= 0) return 1;
+    if (currentPage > lastPage) return lastPage;
+    return currentPage;
+  };
+
+  const clampBlogEntries = (
+    blogEntries: NodeListOf<Element>,
+    currentPage: number,
+  ) => {
+    return [...blogEntries].filter((blogEntry) => {
+      if (Number((blogEntry as HTMLElement).dataset.page) === currentPage)
+        return blogEntry;
+    });
+  };
+
+  let clampedBlogEntries = clampBlogEntries(blogEntries, currentPage);
+
+  const clampedIndex = (currentIndex: number) => {
+    if (clampedBlogEntries.length === 0) return 0;
+    if (currentIndex < 0) return 0;
+    if (currentIndex > clampedBlogEntries.length - 1)
+      return clampedBlogEntries.length - 1;
+    return currentIndex;
+  };
 
   // define a custom event to handle mode changes async
   const NormalModeChangeEvent = new CustomEvent<VimMode>("MODE_CHANGE", {
@@ -68,34 +106,94 @@ const { filename } = Astro.props;
   });
 
   document.addEventListener("MODE_CHANGE", ((event: CustomEvent) => {
-    if (event.detail == "NORMAL") {
-      if (modeElement) modeElement.textContent = "NORMAL";
-    } else {
-      if (modeElement) modeElement.textContent = "BLOG";
+    if (clampedBlogEntries.length != 0) {
+      if (event.detail == "NORMAL") {
+        if (modeElement) modeElement.textContent = "NORMAL";
+        let currSelection = clampedBlogEntries[currentIndex];
+        currSelection.classList.remove("selected");
+      } else {
+        if (modeElement) modeElement.textContent = "BLOG";
+        let currSelection = clampedBlogEntries[currentIndex];
+        currSelection.classList.add("selected");
+      }
     }
   }) as EventListener);
+
+  const moveSelection = (delta: number) => {
+    if (clampedBlogEntries.length != 0) {
+      let currSelection = clampedBlogEntries[currentIndex];
+      currSelection.classList.remove("selected");
+      currentIndex = clampedIndex(currentIndex + delta);
+      const nextSelection = clampedBlogEntries[currentIndex];
+      nextSelection.classList.add("selected");
+    }
+  };
+
+  const movePage = (delta: number) => {
+    if (lastPage > 1 && clampedBlogEntries.length != 0) {
+      currentPage = clampedPage(currentPage + delta);
+      blogBox?.setAttribute("data-pagination-index", currentPage.toString());
+      // reset selection
+      let currSelection = clampedBlogEntries[currentIndex];
+      currSelection.classList.remove("selected");
+      clampedBlogEntries = clampBlogEntries(blogEntries, currentPage);
+      currentIndex = 0;
+      const nextSelection = clampedBlogEntries[currentIndex];
+      nextSelection.classList.add("selected");
+    }
+  };
 
   document.addEventListener("keydown", (event) => {
     let pressedKey = event.key;
     switch (pressedKey) {
       case "p":
-        if (pathName != "/portfolio") navigate("/portfolio");
+        if (window.location.pathname != "/portfolio") navigate("/portfolio");
         break;
       case "n":
-        if (pathName != "/now") navigate("/now");
+        if (window.location.pathname != "/now") navigate("/now");
         break;
       case "b":
-        if (pathName == "/" && currentMode == "NORMAL") {
+        if (window.location.pathname == "/" && currentMode == "NORMAL") {
           currentMode = "BLOG";
           document.dispatchEvent(BlogModeChangeEvent);
         }
         break;
       case "Escape":
-        if (pathName == "/" && currentMode == "BLOG") {
+        event.preventDefault();
+        if (window.location.pathname == "/" && currentMode == "BLOG") {
           currentMode = "NORMAL";
           document.dispatchEvent(NormalModeChangeEvent);
         } else {
           navigate("/");
+        }
+        break;
+      case "j":
+        if (window.location.pathname == "/" && currentMode == "BLOG")
+          moveSelection(1);
+        break;
+      case "k":
+        if (window.location.pathname == "/" && currentMode == "BLOG")
+          moveSelection(-1);
+        break;
+      case "h":
+        if (window.location.pathname == "/" && currentMode == "BLOG")
+          movePage(-1);
+        break;
+      case "l":
+        if (window.location.pathname == "/" && currentMode == "BLOG")
+          movePage(1);
+        break;
+      case "Enter":
+        if (window.location.pathname == "/" && currentMode == "BLOG") {
+          event.preventDefault();
+          if (clampedBlogEntries.length != 0) {
+            let currSelection = clampedBlogEntries[clampedIndex(currentIndex)];
+            let anchorTagSlug = currSelection
+              .querySelector(".blog-entry-parent-flex")
+              .getElementsByTagName("a")[0]
+              .getAttribute("href");
+            if (anchorTagSlug) navigate(anchorTagSlug);
+          }
         }
         break;
     }
