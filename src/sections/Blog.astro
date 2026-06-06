@@ -42,11 +42,21 @@ const PAGINATION_SIZE = 7;
 <style>
   #blog-box {
     display: flex;
-    width: 45%;
+    min-width: 45%;
+    max-width: 60%;
     min-height: 3lh;
     flex-direction: column;
     gap: 0.2ch;
     font-size: 1.5ch;
+  }
+
+  @media (max-width: 900px) {
+    #blog-box {
+      min-width: 70%;
+      max-width: 80%;
+      min-height: 3lh;
+      font-size: 1.4ch;
+    }
   }
 
   #blog-box-heading {
@@ -75,11 +85,14 @@ const PAGINATION_SIZE = 7;
   const pageNumberLast = document.getElementById("page-number-last");
 
   if (pageNumberLast && blogEntries) {
-    const lastPage = Math.max(
-      ...Array.from(blogEntries, (blogEntry) =>
-        Number((blogEntry as HTMLElement).dataset.page),
-      ),
-    );
+    const lastPage =
+      blogEntries.length > 0
+        ? Math.max(
+            ...Array.from(blogEntries, (blogEntry) =>
+              Number((blogEntry as HTMLElement).dataset.page),
+            ),
+          )
+        : 1;
     if (lastPage != 1) pageNumberLast.innerText = lastPage.toString();
     else {
       const blogFooter = document.getElementById("blog-box-footer-div");
