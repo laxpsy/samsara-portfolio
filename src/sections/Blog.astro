@@ -6,7 +6,7 @@ const allBlogPosts = (await getCollection("blog")).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
 const BLOG_ROUTE = "/blog/";
-const PAGINATION_SIZE = 7;
+const PAGINATION_SIZE = 2;
 ---
 
 <section class="section-flex">
@@ -31,11 +31,9 @@ const PAGINATION_SIZE = 7;
       })
     }
     <div id="blog-box-footer-div" style="align-self:end; gap:0">
-      <span id="blog-box-footer"
-        >&lt;<span id="page-number-current" style="font-weight:600">1</span
-        >&sol;<span id="page-number-last" style="font-weight:600">1</span
-        >&gt;</span
-      >
+      <span id="blog-box-footer">
+        <span id="prev-page">&lt;</span><span id="page-number-current" style="font-weight:600">1</span>&sol;<span id="page-number-last" style="font-weight:600">1</span><span id="next-page">&gt;</span>
+      </span>
     </div>
   </div>
 </section>
@@ -83,6 +81,12 @@ const PAGINATION_SIZE = 7;
     background-color: var(--background0);
     padding: 0 1ch;
   }
+  #prev-page,
+  #next-page {
+    cursor: pointer;
+    color: var(--mauve);
+    font-weight: 600;
+  }
 </style>
 
 <script>
@@ -91,9 +95,19 @@ const PAGINATION_SIZE = 7;
   const blogEntries = blogBox?.querySelectorAll<HTMLElement>("[data-page]");
   const pageNumberCurrent = document.getElementById("page-number-current");
   const pageNumberLast = document.getElementById("page-number-last");
+  const prevPage = document.getElementById("prev-page");
+  const nextPage = document.getElementById("next-page");
+
+  const clampedPage = (page: number, lastPage: number) => {
+    if (page < 1) return 1;
+    if (page > lastPage) return lastPage;
+    return page;
+  };
+
+  let lastPage = 1;
 
   if (pageNumberLast && blogEntries) {
-    const lastPage =
+    lastPage =
       blogEntries.length > 0
         ? Math.max(
             ...Array.from(blogEntries, (blogEntry) =>
@@ -119,9 +133,23 @@ const PAGINATION_SIZE = 7;
             ? ""
             : "none";
       });
+    if (prevPage) prevPage.style.visibility = dataPaginationIndex <= 1 ? "hidden" : "visible";
+    if (nextPage) nextPage.style.visibility = dataPaginationIndex >= lastPage ? "hidden" : "visible";
   };
 
   updateVisiblePosts();
+
+  prevPage?.addEventListener("click", () => {
+    dataPaginationIndex = clampedPage(dataPaginationIndex - 1, lastPage);
+    blogBox?.setAttribute("data-pagination-index", dataPaginationIndex.toString());
+    updateVisiblePosts();
+  });
+
+  nextPage?.addEventListener("click", () => {
+    dataPaginationIndex = clampedPage(dataPaginationIndex + 1, lastPage);
+    blogBox?.setAttribute("data-pagination-index", dataPaginationIndex.toString());
+    updateVisiblePosts();
+  });
 
   const paginationObserver = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {

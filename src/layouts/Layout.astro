@@ -2,6 +2,7 @@
 import Head from "../components/Head.astro";
 import Footer from "../components/Footer.astro";
 import Navbar from "../components/Navbar.astro";
+import KeyBindings from "../components/KeyBindings.astro";
 import "../style/global.css";
 interface Props {
   filename: string;
@@ -19,6 +20,7 @@ const { filename, title = "Samsara" } = Astro.props;
     <main>
       <slot />
     </main>
+    <KeyBindings />
     <Footer filename={filename} />
   </body>
 </html>
@@ -30,6 +32,7 @@ const { filename, title = "Samsara" } = Astro.props;
     height: 100%;
     min-height: 100dvh;
     margin: 0ch auto;
+    position: relative;
   }
 
   body {
@@ -65,6 +68,9 @@ const { filename, title = "Samsara" } = Astro.props;
           ),
         )
       : 1;
+
+  const isKeybindingsOverlayOpen = () =>
+    document.getElementById("keybindings-overlay")?.style.display === "block";
 
   let currentMode: VimMode = "NORMAL";
   let currentIndex = 0;
@@ -104,6 +110,9 @@ const { filename, title = "Samsara" } = Astro.props;
   const BlogModeChangeEvent = new CustomEvent<VimMode>("MODE_CHANGE", {
     detail: "BLOG",
   });
+
+  // define a custom event to handle keybindings display
+  const ToggleKeybindingsEvent = new CustomEvent<boolean>("TOGGLE_KEYBINDINGS");
 
   document.addEventListener("MODE_CHANGE", ((event: CustomEvent) => {
     if (clampedBlogEntries.length != 0) {
@@ -145,6 +154,13 @@ const { filename, title = "Samsara" } = Astro.props;
 
   document.addEventListener("keydown", (event) => {
     let pressedKey = event.key;
+    // don't handle inputs when keybindings are open, unless quit
+    if (
+      isKeybindingsOverlayOpen() &&
+      pressedKey !== "Escape" &&
+      pressedKey !== "q"
+    )
+      return;
     switch (pressedKey) {
       case "p":
         if (window.location.pathname != "/portfolio") navigate("/portfolio");
@@ -160,6 +176,10 @@ const { filename, title = "Samsara" } = Astro.props;
         break;
       case "Escape":
         event.preventDefault();
+        if (isKeybindingsOverlayOpen()) {
+          document.dispatchEvent(ToggleKeybindingsEvent);
+          break;
+        }
         if (window.location.pathname == "/" && currentMode == "BLOG") {
           currentMode = "NORMAL";
           document.dispatchEvent(NormalModeChangeEvent);
@@ -195,6 +215,15 @@ const { filename, title = "Samsara" } = Astro.props;
             if (anchorTagSlug) navigate(anchorTagSlug);
           }
         }
+        break;
+      case "?":
+        document.dispatchEvent(ToggleKeybindingsEvent);
+        break;
+      case "q":
+        if (isKeybindingsOverlayOpen()) {
+          document.dispatchEvent(ToggleKeybindingsEvent);
+        }
+
         break;
     }
   });

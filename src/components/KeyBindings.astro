@@ -1,0 +1,187 @@
+<div id="keybindings-overlay">
+  <div id="keybindings-container"></div>
+</div>
+
+<script>
+  // types for bindings
+  type KeyBinding = {
+    key: string;
+    description: string;
+  };
+
+  type ModeBindings = {
+    NORMAL: KeyBinding[];
+    BLOG: KeyBinding[];
+  };
+
+  type BindingsByRoute = {
+    [route: string]: ModeBindings;
+  };
+
+  const AGNOSTIC_BINDINGS: KeyBinding[] = [
+    { key: "p", description: "go to portfolio" },
+    { key: "n", description: "go to now" },
+    { key: "Esc", description: "go home" },
+    { key: "?", description: "show keybindings" },
+    { key: "q", description: "close keybindings" },
+  ];
+
+  // mode-specific keybindings from Layout.astro
+  const bindingsByPageAndMode: BindingsByRoute = {
+    "/": {
+      NORMAL: [{ key: "b", description: "enter BLOG mode" }],
+      BLOG: [
+        { key: "j", description: "next entry" },
+        { key: "k", description: "prev entry" },
+        { key: "h", description: "prev page" },
+        { key: "l", description: "next page" },
+        { key: "Enter", description: "open entry" },
+        { key: "Esc", description: "exit BLOG mode" },
+      ],
+    },
+    "/portfolio": {
+      NORMAL: [],
+      BLOG: [],
+    },
+    "/now": {
+      NORMAL: [],
+      BLOG: [],
+    },
+  };
+
+  // helper function to createBindingDivs
+  const createBindingsDivs = (
+    bindings: KeyBinding[],
+    divElement: HTMLDivElement,
+  ) => {
+    bindings.forEach((binding) => {
+      const bindingDiv = document.createElement("div");
+      bindingDiv.style.display = "flex";
+      bindingDiv.style.flexDirection = "row";
+      bindingDiv.style.alignItems = "center";
+      bindingDiv.style.gap = "1ch";
+      bindingDiv.style.maxWidth = "80%";
+
+      const bindingKey = document.createElement("p");
+      bindingKey.textContent = binding.key;
+      bindingKey.style.fontSize = "1.5ch";
+      bindingKey.style.color = "var(--yellow)";
+
+      const bindingDescription = document.createElement("p");
+      bindingDescription.textContent = binding.description;
+      bindingDescription.style.fontSize = "1.2ch";
+      bindingDescription.style.flexGrow = "1";
+
+      bindingDiv.appendChild(bindingKey);
+      bindingDiv.appendChild(bindingDescription);
+
+      divElement.appendChild(bindingDiv);
+    });
+  };
+
+  // helper function to redraw keybindings for each page
+  const redraw = (pathName: string) => {
+    const modeBindings: ModeBindings = bindingsByPageAndMode[pathName] ?? {
+      NORMAL: [],
+      BLOG: [],
+    };
+
+    // clear keybindings container on each redraw
+    const keybindingsContainer = document.getElementById(
+      "keybindings-container",
+    );
+    if (!keybindingsContainer) return;
+    keybindingsContainer.replaceChildren();
+
+    const agnosticBindingContainer = document.createElement("div");
+    agnosticBindingContainer.style.display = "flex";
+    agnosticBindingContainer.style.flexDirection = "column";
+    agnosticBindingContainer.style.gap = "2ch";
+    agnosticBindingContainer.style.flexGrow = "1";
+
+    const agnosticHeading = document.createElement("p");
+    agnosticHeading.textContent = "GENERAL";
+    agnosticHeading.style.fontSize = "1.8ch";
+    agnosticHeading.style.color = "var(--flamingo)";
+    agnosticHeading.style.textAlign = "center";
+
+    agnosticBindingContainer.appendChild(agnosticHeading);
+    createBindingsDivs(AGNOSTIC_BINDINGS, agnosticBindingContainer);
+    keybindingsContainer.appendChild(agnosticBindingContainer);
+
+    if (modeBindings.NORMAL.length > 0) {
+      const normalModeBindingContainer = document.createElement("div");
+      normalModeBindingContainer.style.display = "flex";
+      normalModeBindingContainer.style.flexDirection = "column";
+      normalModeBindingContainer.style.gap = "2ch";
+      normalModeBindingContainer.style.flexGrow = "1";
+
+      const normalModeHeading = document.createElement("p");
+      normalModeHeading.textContent = "NORMAL MODE";
+      normalModeHeading.style.fontSize = "1.8ch";
+      normalModeHeading.style.color = "var(--flamingo)";
+      normalModeHeading.style.textAlign = "center";
+
+      normalModeBindingContainer.appendChild(normalModeHeading);
+      createBindingsDivs(modeBindings.NORMAL, normalModeBindingContainer);
+      keybindingsContainer.appendChild(normalModeBindingContainer);
+    }
+
+    if (modeBindings.BLOG.length > 0) {
+      const blogModeBindingContainer = document.createElement("div");
+      blogModeBindingContainer.style.display = "flex";
+      blogModeBindingContainer.style.flexDirection = "column";
+      blogModeBindingContainer.style.gap = "2ch";
+      blogModeBindingContainer.style.flexGrow = "1";
+
+      const blogModeHeading = document.createElement("p");
+      blogModeHeading.textContent = "BLOG MODE";
+      blogModeHeading.style.fontSize = "1.8ch";
+      blogModeHeading.style.color = "var(--flamingo)";
+      blogModeHeading.style.textAlign = "center";
+      blogModeBindingContainer.appendChild(blogModeHeading);
+
+      createBindingsDivs(modeBindings.BLOG, blogModeBindingContainer);
+
+      keybindingsContainer.appendChild(blogModeBindingContainer);
+    }
+  };
+
+  const isKeybindingsOverlayOpen = () =>
+    document.getElementById("keybindings-overlay")?.style.display === "block";
+  const keybindingsOverlay = document.getElementById("keybindings-overlay");
+  document.addEventListener("TOGGLE_KEYBINDINGS", ((event: CustomEvent) => {
+    if (!isKeybindingsOverlayOpen()) {
+      redraw(window.location.pathname);
+      keybindingsOverlay!.style.display = "block";
+    } else {
+      keybindingsOverlay!.style.display = "none";
+    }
+  }) as EventListener);
+</script>
+
+<style>
+  #keybindings-overlay {
+    display: none;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background-color: color-mix(in srgb, var(--crust), transparent 30%);
+  }
+
+  #keybindings-container {
+    position: fixed;
+    display: flex;
+    flex-direction: row;
+    gap: 2ch;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    overflow-y: auto;
+    max-width: 90%;
+    height: auto;
+    background-color: var(--mantle);
+    border: 2px solid white;
+    padding: 2ch;
+  }
+</style>
