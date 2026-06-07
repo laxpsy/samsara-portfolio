@@ -6,7 +6,7 @@ const allBlogPosts = (await getCollection("blog")).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
 const BLOG_ROUTE = "/blog/";
-const PAGINATION_SIZE = 2;
+const PAGINATION_SIZE = 7;
 ---
 
 <section class="section-flex">
@@ -32,7 +32,12 @@ const PAGINATION_SIZE = 2;
     }
     <div id="blog-box-footer-div" style="align-self:end; gap:0">
       <span id="blog-box-footer">
-        <span id="prev-page">&lt;</span><span id="page-number-current" style="font-weight:600">1</span>&sol;<span id="page-number-last" style="font-weight:600">1</span><span id="next-page">&gt;</span>
+        <span id="prev-page">&lt;</span><span
+          id="page-number-current"
+          style="font-weight:600">1</span
+        >&sol;<span id="page-number-last" style="font-weight:600">1</span><span
+          id="next-page">&gt;</span
+        >
       </span>
     </div>
   </div>
@@ -98,13 +103,11 @@ const PAGINATION_SIZE = 2;
   const prevPage = document.getElementById("prev-page");
   const nextPage = document.getElementById("next-page");
 
-  const clampedPage = (page: number, lastPage: number) => {
-    if (page < 1) return 1;
-    if (page > lastPage) return lastPage;
-    return page;
-  };
-
   let lastPage = 1;
+  let startX = 0;
+  let endX = 0;
+  let startY = 0;
+  let endY = 0;
 
   if (pageNumberLast && blogEntries) {
     lastPage =
@@ -122,6 +125,12 @@ const PAGINATION_SIZE = 2;
     }
   }
 
+  const clampedPage = (page: number) => {
+    if (page < 1) return 1;
+    if (page > lastPage) return lastPage;
+    return page;
+  };
+
   const updateVisiblePosts = () => {
     if (pageNumberCurrent)
       pageNumberCurrent.innerText = dataPaginationIndex.toString();
@@ -133,22 +142,62 @@ const PAGINATION_SIZE = 2;
             ? ""
             : "none";
       });
-    if (prevPage) prevPage.style.visibility = dataPaginationIndex <= 1 ? "hidden" : "visible";
-    if (nextPage) nextPage.style.visibility = dataPaginationIndex >= lastPage ? "hidden" : "visible";
+    if (prevPage)
+      prevPage.style.visibility =
+        dataPaginationIndex <= 1 ? "hidden" : "visible";
+    if (nextPage)
+      nextPage.style.visibility =
+        dataPaginationIndex >= lastPage ? "hidden" : "visible";
+  };
+
+  const navigatePage = (delta: number) => {
+    dataPaginationIndex = clampedPage(dataPaginationIndex + delta);
+    blogBox?.setAttribute(
+      "data-pagination-index",
+      dataPaginationIndex.toString(),
+    );
+    updateVisiblePosts();
+  };
+
+  const handleSwipe = (
+    startX: number,
+    endX: number,
+    startY: number,
+    endY: number,
+  ) => {
+    const threshold = 50;
+    const dx = endX - startX;
+    const dy = endY - startY;
+    if (Math.abs(dy) > Math.abs(dx)) return;
+    if (dx < -threshold) {
+      navigatePage(1);
+    }
+    if (dx > threshold) {
+      navigatePage(-1);
+    }
   };
 
   updateVisiblePosts();
 
   prevPage?.addEventListener("click", () => {
-    dataPaginationIndex = clampedPage(dataPaginationIndex - 1, lastPage);
-    blogBox?.setAttribute("data-pagination-index", dataPaginationIndex.toString());
-    updateVisiblePosts();
+    navigatePage(-1);
   });
 
   nextPage?.addEventListener("click", () => {
-    dataPaginationIndex = clampedPage(dataPaginationIndex + 1, lastPage);
-    blogBox?.setAttribute("data-pagination-index", dataPaginationIndex.toString());
-    updateVisiblePosts();
+    navigatePage(1);
+  });
+
+  blogBox?.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    startX = e.changedTouches[0].screenX;
+    startY = e.changedTouches[0].screenY;
+  });
+
+  blogBox?.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    endX = e.changedTouches[0].screenX;
+    endY = e.changedTouches[0].screenY;
+    handleSwipe(startX, endX, startY, endY);
   });
 
   const paginationObserver = new MutationObserver((mutations) => {
