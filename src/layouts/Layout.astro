@@ -57,6 +57,7 @@ const { filename, title = "Samsara" } = Astro.props;
 
   let modeElement = document.getElementById("vim-mode");
   let blogBox = document.getElementById("blog-box");
+  let globalHTMLElement = document.documentElement;
 
   const allBlogEntries = document.querySelectorAll(
     ".blog-entry-parent-flex-wrapper",
@@ -152,16 +153,22 @@ const { filename, title = "Samsara" } = Astro.props;
 
   document.addEventListener("MODE_CHANGE", ((event: CustomEvent) => {
     if (modeElement) {
-      if (event.detail == "NOTES") modeElement.textContent = "NOTES";
-      else if (event.detail == "BLOG") modeElement.textContent = "BLOG";
-      else if (event.detail == "NORMAL") modeElement.textContent = "NORMAL";
+      if (event.detail == "NOTES") {
+        modeElement.textContent = "NOTES";
+        modeElement.setAttribute("variant-", "red");
+        globalHTMLElement.dataset.webtuiTheme = "catppuccin-macchiato";
+      } else if (event.detail == "BLOG") {
+        modeElement.textContent = "BLOG";
+        modeElement.setAttribute("variant-", "blue");
+        globalHTMLElement.dataset.webtuiTheme = "catppuccin-mocha";
+      } else if (event.detail == "NORMAL") {
+        modeElement.textContent = "NORMAL";
+        modeElement.setAttribute("variant-", "blue");
+        globalHTMLElement.dataset.webtuiTheme = "catppuccin-mocha";
+      }
     }
-    // clear any prior selection on switch
-    const all = blogBox?.querySelectorAll<HTMLElement>(
-      ".blog-entry-parent-flex-wrapper",
-    );
-    all?.forEach((entry) => entry.classList.remove("selected"));
-    // re-derive for the new mode
+    let currSelection = clampedEntries[currentIndex];
+    currSelection.classList.remove("selected");
     refreshActiveState();
     if (
       (event.detail == "BLOG" || event.detail == "NOTES") &&
