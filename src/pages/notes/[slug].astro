@@ -1,0 +1,99 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+import { render } from "astro:content";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("notes");
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+const { post } = Astro.props;
+const { Content, remarkPluginFrontmatter } = await render(post);
+
+const isUrl = (s: string) => {
+  try {
+    new URL(s);
+    return true;
+  } catch {
+    return false;
+  }
+};
+---
+
+<Layout title={post.data.title} filename={`${post.id}.astro`}>
+  <div class="blog-header">
+    <h1 style="font-size: 2ch; justify-self:center;">
+      {post.data.title}
+    </h1>
+    <p style="font-size:1.5ch;">
+      {remarkPluginFrontmatter.minutesRead}
+    </p>
+  </div>
+  <hr />
+  <br />
+  <div class="prose">
+    <Content />
+    {
+      post.data.source.length > 0 && (
+        <section class="references">
+          <h2>References</h2>
+          <ul>
+            {post.data.source.map((src) => (
+              <li>
+                {isUrl(src) ? (
+                  <a href={src} target="_blank" rel="noopener noreferrer">
+                    {src}
+                  </a>
+                ) : (
+                  src
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+  </div>
+</Layout>
+
+<style>
+  .blog-header {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .references {
+    margin-top: 3lh;
+    padding: 1ch 1.5ch;
+    background-color: color-mix(in srgb, var(--background1), transparent 80%);
+    border: 2px solid color-mix(in srgb, var(--background2), transparent 80%);
+  }
+
+  .references h2 {
+    font-size: 1.8ch;
+    margin-bottom: 1ch;
+  }
+
+  .references ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5ch;
+  }
+
+  .references li {
+    font-size: 1.5ch;
+  }
+
+  .references a {
+    color: var(--lavender);
+  }
+</style>

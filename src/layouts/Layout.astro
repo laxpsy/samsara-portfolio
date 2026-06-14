@@ -53,18 +53,19 @@ const { filename, title = "Samsara" } = Astro.props;
 <script>
   import { navigate } from "astro:transitions/client";
 
-  type VimMode = "NORMAL" | "BLOG";
+  type VimMode = "NORMAL" | "BLOG" | "NOTES";
 
   let modeElement = document.getElementById("vim-mode");
   let blogBox = document.getElementById("blog-box");
-  let blogEntries = document.querySelectorAll(
+
+  const allBlogEntries = document.querySelectorAll(
     ".blog-entry-parent-flex-wrapper",
   );
 
   const lastPage =
-    blogEntries.length > 0
+    allBlogEntries.length > 0
       ? Math.max(
-          ...Array.from(blogEntries, (blogEntry) =>
+          ...Array.from(allBlogEntries, (blogEntry) =>
             Number((blogEntry as HTMLElement).dataset.page),
           ),
         )
@@ -77,29 +78,46 @@ const { filename, title = "Samsara" } = Astro.props;
   let currentIndex = 0;
   let currentPage = 1;
 
+  // o* key sequence for NOTES mode
+  let lastOPress = false;
+  const O_SEQUENCE_TIMEOUT = 1000;
+  let oSequenceTimer: ReturnType<typeof setTimeout> | null = null;
+  const armOPress = () => {
+    lastOPress = true;
+    if (oSequenceTimer) clearTimeout(oSequenceTimer);
+    oSequenceTimer = setTimeout(() => {
+      lastOPress = false;
+    }, O_SEQUENCE_TIMEOUT);
+  };
+
   const clampedPage = (currentPage: number) => {
     if (currentPage <= 0) return 1;
     if (currentPage > lastPage) return lastPage;
     return currentPage;
   };
 
-  const clampBlogEntries = (
-    blogEntries: NodeListOf<Element>,
+  const clampEntries = (
+    entries: NodeListOf<Element> | Element[],
     currentPage: number,
   ) => {
-    return [...blogEntries].filter((blogEntry) => {
-      if (Number((blogEntry as HTMLElement).dataset.page) === currentPage)
-        return blogEntry;
-    });
+    return [...entries].filter((entry) => {
+      if (Number((entry as HTMLElement).dataset.page) === currentPage)
+        return entry;
+    }) as HTMLElement[];
   };
 
-  let clampedBlogEntries = clampBlogEntries(blogEntries, currentPage);
+  // blogMode initial state
+  const initialEntries =
+    blogBox?.querySelectorAll(
+      '.blog-entry-parent-flex-wrapper[data-collection="blog"]',
+    ) ?? ([] as Element[]);
+  let clampedEntries: HTMLElement[] = clampEntries(initialEntries, currentPage);
 
   const clampedIndex = (currentIndex: number) => {
-    if (clampedBlogEntries.length === 0) return 0;
+    if (clampedEntries.length === 0) return 0;
     if (currentIndex < 0) return 0;
-    if (currentIndex > clampedBlogEntries.length - 1)
-      return clampedBlogEntries.length - 1;
+    if (currentIndex > clampedEntries.length - 1)
+      return clampedEntries.length - 1;
     return currentIndex;
   };
 
@@ -112,44 +130,67 @@ const { filename, title = "Samsara" } = Astro.props;
     detail: "BLOG",
   });
 
+  const NotesModeChangeEvent = new CustomEvent<VimMode>("MODE_CHANGE", {
+    detail: "NOTES",
+  });
+
   // define a custom event to handle keybindings display
   const ToggleKeybindingsEvent = new CustomEvent<boolean>("TOGGLE_KEYBINDINGS");
 
+  const refreshActiveState = () => {
+    if (!blogBox) {
+      clampedEntries = [];
+      return;
+    }
+    const collection = currentMode === "NOTES" ? "notes" : "blog";
+    const allEntries = blogBox.querySelectorAll(
+      `.blog-entry-parent-flex-wrapper[data-collection="${collection}"]`,
+    );
+    clampedEntries = clampEntries(allEntries, currentPage);
+    currentIndex = clampedIndex(currentIndex);
+  };
+
   document.addEventListener("MODE_CHANGE", ((event: CustomEvent) => {
-    if (clampedBlogEntries.length != 0) {
-      if (event.detail == "NORMAL") {
-        if (modeElement) modeElement.textContent = "NORMAL";
-        let currSelection = clampedBlogEntries[currentIndex];
-        currSelection.classList.remove("selected");
-      } else {
-        if (modeElement) modeElement.textContent = "BLOG";
-        let currSelection = clampedBlogEntries[currentIndex];
-        currSelection.classList.add("selected");
-      }
+    if (modeElement) {
+      if (event.detail == "NOTES") modeElement.textContent = "NOTES";
+      else if (event.detail == "BLOG") modeElement.textContent = "BLOG";
+      else if (event.detail == "NORMAL") modeElement.textContent = "NORMAL";
+    }
+    // clear any prior selection on switch
+    const all = blogBox?.querySelectorAll<HTMLElement>(
+      ".blog-entry-parent-flex-wrapper",
+    );
+    all?.forEach((entry) => entry.classList.remove("selected"));
+    // re-derive for the new mode
+    refreshActiveState();
+    if (
+      (event.detail == "BLOG" || event.detail == "NOTES") &&
+      clampedEntries.length > 0
+    ) {
+      currentIndex = 0;
+      clampedEntries[0].classList.add("selected");
     }
   }) as EventListener);
 
   const moveSelection = (delta: number) => {
-    if (clampedBlogEntries.length != 0) {
-      let currSelection = clampedBlogEntries[currentIndex];
+    if (clampedEntries.length != 0) {
+      let currSelection = clampedEntries[currentIndex];
       currSelection.classList.remove("selected");
       currentIndex = clampedIndex(currentIndex + delta);
-      const nextSelection = clampedBlogEntries[currentIndex];
+      const nextSelection = clampedEntries[currentIndex];
       nextSelection.classList.add("selected");
     }
   };
 
   const movePage = (delta: number) => {
-    if (lastPage > 1 && clampedBlogEntries.length != 0) {
+    if (lastPage > 1 && blogBox) {
       currentPage = clampedPage(currentPage + delta);
-      blogBox?.setAttribute("data-pagination-index", currentPage.toString());
-      // reset selection
-      let currSelection = clampedBlogEntries[currentIndex];
-      currSelection.classList.remove("selected");
-      clampedBlogEntries = clampBlogEntries(blogEntries, currentPage);
+      blogBox.setAttribute("data-pagination-index", currentPage.toString());
+      refreshActiveState();
       currentIndex = 0;
-      const nextSelection = clampedBlogEntries[currentIndex];
-      nextSelection.classList.add("selected");
+      if (clampedEntries.length > 0) {
+        clampedEntries[0].classList.add("selected");
+      }
     }
   };
 
@@ -169,8 +210,27 @@ const { filename, title = "Samsara" } = Astro.props;
       case "n":
         if (window.location.pathname != "/now") navigate("/now");
         break;
-      case "b":
+      case "o":
         if (window.location.pathname == "/" && currentMode == "NORMAL") {
+          armOPress();
+        }
+        break;
+      case "*":
+        if (
+          window.location.pathname == "/" &&
+          currentMode == "NORMAL" &&
+          lastOPress
+        ) {
+          currentMode = "NOTES";
+          document.dispatchEvent(NotesModeChangeEvent);
+        }
+        lastOPress = false;
+        break;
+      case "b":
+        if (
+          window.location.pathname == "/" &&
+          (currentMode == "NORMAL" || currentMode == "NOTES")
+        ) {
           currentMode = "BLOG";
           document.dispatchEvent(BlogModeChangeEvent);
         }
@@ -181,7 +241,10 @@ const { filename, title = "Samsara" } = Astro.props;
           document.dispatchEvent(ToggleKeybindingsEvent);
           break;
         }
-        if (window.location.pathname == "/" && currentMode == "BLOG") {
+        if (
+          window.location.pathname == "/" &&
+          (currentMode == "BLOG" || currentMode == "NOTES")
+        ) {
           currentMode = "NORMAL";
           document.dispatchEvent(NormalModeChangeEvent);
         } else {
@@ -189,26 +252,41 @@ const { filename, title = "Samsara" } = Astro.props;
         }
         break;
       case "j":
-        if (window.location.pathname == "/" && currentMode == "BLOG")
+        if (
+          window.location.pathname == "/" &&
+          (currentMode == "BLOG" || currentMode == "NOTES")
+        )
           moveSelection(1);
         break;
       case "k":
-        if (window.location.pathname == "/" && currentMode == "BLOG")
+        if (
+          window.location.pathname == "/" &&
+          (currentMode == "BLOG" || currentMode == "NOTES")
+        )
           moveSelection(-1);
         break;
       case "h":
-        if (window.location.pathname == "/" && currentMode == "BLOG")
+        if (
+          window.location.pathname == "/" &&
+          (currentMode == "BLOG" || currentMode == "NOTES")
+        )
           movePage(-1);
         break;
       case "l":
-        if (window.location.pathname == "/" && currentMode == "BLOG")
+        if (
+          window.location.pathname == "/" &&
+          (currentMode == "BLOG" || currentMode == "NOTES")
+        )
           movePage(1);
         break;
       case "Enter":
-        if (window.location.pathname == "/" && currentMode == "BLOG") {
+        if (
+          window.location.pathname == "/" &&
+          (currentMode == "BLOG" || currentMode == "NOTES")
+        ) {
           event.preventDefault();
-          if (clampedBlogEntries.length != 0) {
-            let currSelection = clampedBlogEntries[clampedIndex(currentIndex)];
+          if (clampedEntries.length != 0) {
+            let currSelection = clampedEntries[clampedIndex(currentIndex)];
             let anchorTagSlug = currSelection
               .querySelector(".blog-entry-parent-flex")
               .getElementsByTagName("a")[0]
