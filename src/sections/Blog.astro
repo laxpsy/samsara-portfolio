@@ -5,12 +5,22 @@ import BlogEntry from "../components/BlogEntry.astro";
 const allBlogPosts = (await getCollection("blog")).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
+const allNotes = (await getCollection("notes")).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
 const BLOG_ROUTE = "/blog/";
+const NOTES_ROUTE = "/notes/";
 const PAGINATION_SIZE = 7;
 ---
 
 <section class="section-flex">
-  <div id="blog-box" box-="square" data-pagination-index={1} shear-="both">
+  <div
+    id="blog-box"
+    box-="square"
+    data-pagination-index={1}
+    data-collection="blog"
+    shear-="both"
+  >
     <div class="header">
       <span id="blog-box-heading">blog</span>
     </div>
@@ -20,10 +30,29 @@ const PAGINATION_SIZE = 7;
           <div
             class="blog-entry-parent-flex-wrapper"
             data-page={Math.floor(index / PAGINATION_SIZE) + 1}
+            data-collection="blog"
           >
             <BlogEntry
               title={post.data.title}
               slug={`${BLOG_ROUTE}${post.id}`}
+              dateOfPublication={post.data.pubDate.toLocaleDateString()}
+            />
+          </div>
+        );
+      })
+    }
+    {
+      allNotes.map((post, index) => {
+        return (
+          <div
+            class="blog-entry-parent-flex-wrapper"
+            data-page={Math.floor(index / PAGINATION_SIZE) + 1}
+            data-collection="notes"
+            style="display: none"
+          >
+            <BlogEntry
+              title={post.data.title}
+              slug={`${NOTES_ROUTE}${post.id}`}
               dateOfPublication={post.data.pubDate.toLocaleDateString()}
             />
           </div>
@@ -96,34 +125,43 @@ const PAGINATION_SIZE = 7;
 
 <script>
   let dataPaginationIndex = 1;
+  let activeCollection: "blog" | "notes" = "blog";
   const blogBox = document.getElementById("blog-box");
-  const blogEntries = blogBox?.querySelectorAll<HTMLElement>("[data-page]");
   const pageNumberCurrent = document.getElementById("page-number-current");
   const pageNumberLast = document.getElementById("page-number-last");
   const prevPage = document.getElementById("prev-page");
   const nextPage = document.getElementById("next-page");
+  const blogBoxHeading = document.getElementById("blog-box-heading");
+  const blogFooterDiv = document.getElementById("blog-box-footer-div");
 
-  let lastPage = 1;
   let startX = 0;
   let endX = 0;
   let startY = 0;
   let endY = 0;
 
-  if (pageNumberLast && blogEntries) {
-    lastPage =
-      blogEntries.length > 0
-        ? Math.max(
-            ...Array.from(blogEntries, (blogEntry) =>
-              Number((blogEntry as HTMLElement).dataset.page),
-            ),
-          )
-        : 1;
-    if (lastPage != 1) pageNumberLast.innerText = lastPage.toString();
-    else {
-      const blogFooter = document.getElementById("blog-box-footer-div");
-      blogFooter.style = "visibility:hidden";
-    }
-  }
+  const getActiveEntries = (): HTMLElement[] => {
+    const all = blogBox?.querySelectorAll<HTMLElement>(
+      `.blog-entry-parent-flex-wrapper[data-collection="${activeCollection}"]`,
+    );
+    return all ? [...all] : [];
+  };
+
+  const lastPageFor = (collection: "blog" | "notes") => {
+    const entries = blogBox?.querySelectorAll<HTMLElement>(
+      `.blog-entry-parent-flex-wrapper[data-collection="${collection}"]`,
+    );
+    if (!entries || entries.length === 0) return 1;
+    return Math.max(
+      ...Array.from(entries, (entry) =>
+        Number((entry as HTMLElement).dataset.page),
+      ),
+    );
+  };
+
+  let lastPage = lastPageFor("blog");
+
+  if (blogFooterDiv)
+    blogFooterDiv.style.visibility = lastPage <= 1 ? "hidden" : "visible";
 
   const clampedPage = (page: number) => {
     if (page < 1) return 1;
@@ -134,14 +172,18 @@ const PAGINATION_SIZE = 7;
   const updateVisiblePosts = () => {
     if (pageNumberCurrent)
       pageNumberCurrent.innerText = dataPaginationIndex.toString();
-    if (blogEntries)
-      blogEntries.forEach((blogEntry) => {
-        blogEntry.style.display =
-          parseInt(blogEntry.dataset.page ? blogEntry.dataset.page : "0") ===
-          dataPaginationIndex
-            ? ""
-            : "none";
+    const allEntries = blogBox?.querySelectorAll<HTMLElement>(
+      ".blog-entry-parent-flex-wrapper",
+    );
+    if (allEntries) {
+      allEntries.forEach((entry) => {
+        const el = entry as HTMLElement;
+        const matchesCollection = el.dataset.collection === activeCollection;
+        const matchesPage =
+          parseInt(el.dataset.page ?? "0") === dataPaginationIndex;
+        el.style.display = matchesCollection && matchesPage ? "" : "none";
       });
+    }
     if (prevPage)
       prevPage.style.visibility =
         dataPaginationIndex <= 1 ? "hidden" : "visible";
@@ -158,6 +200,28 @@ const PAGINATION_SIZE = 7;
     );
     updateVisiblePosts();
   };
+
+  const setActiveCollection = (collection: "blog" | "notes") => {
+    activeCollection = collection;
+    dataPaginationIndex = 1;
+    lastPage = lastPageFor(collection);
+    blogBox?.setAttribute("data-collection", collection);
+    if (blogBoxHeading) blogBoxHeading.textContent = collection;
+    blogBox?.setAttribute("data-pagination-index", "1");
+    if (blogFooterDiv)
+      blogFooterDiv.style.visibility = lastPage <= 1 ? "hidden" : "visible";
+    if (pageNumberLast)
+      pageNumberLast.innerText = lastPage > 1 ? lastPage.toString() : "1";
+    updateVisiblePosts();
+  };
+
+  document.addEventListener("MODE_CHANGE", ((event: CustomEvent) => {
+    if (event.detail === "NOTES") {
+      setActiveCollection("notes");
+    } else if (event.detail === "BLOG" || event.detail === "NORMAL") {
+      setActiveCollection("blog");
+    }
+  }) as EventListener);
 
   const handleSwipe = (
     startX: number,
@@ -219,3 +283,4 @@ const PAGINATION_SIZE = 7;
     attributeFilter: ["data-pagination-index"],
   });
 </script>
+
