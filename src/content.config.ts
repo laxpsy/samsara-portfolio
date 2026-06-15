@@ -29,3 +29,4 @@ const notes = defineCollection({
 
 // 5. Export a single `collections` object to register your collection(s)
 export const collections = { blog, notes };
+
