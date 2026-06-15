@@ -1,5 +1,6 @@
 @layer base, utils, components;
 
+@import "./directives.css";
 @import "@webtui/css/base.css";
 @import "@webtui/css/components/typography.css";
 @import "@webtui/css/components/button.css";
@@ -116,11 +117,218 @@
 }
 
 .prose img {
-  width: 75%;
+  display: block;
+  width: auto;
+  max-width: 50%;
   height: auto;
+  max-height: 50%;
+  margin: 0 auto;
+  padding: 2ch 0;
+}
+
+@media (max-width: 500px) {
+  .prose img {
+    max-width: 100%;
+  }
 }
 
 .prose .footnotes {
   background-color: color-mix(in srgb, var(--background1), transparent 80%);
   border: 2px solid color-mix(in srgb, var(--background2), transparent 80%);
+}
+
+/* === Callouts === */
+.prose [data-callout] {
+  padding: 0.5lh 1ch;
+  border-left: 3px solid;
+  margin-block: 0.7lh;
+  font-size: 1.5ch;
+}
+
+[data-callout-title] {
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 1ch;
+  margin-block-end: 0.3lh;
+}
+
+[data-callout-title]::before {
+  font-family: "Symbols Nerd Font", monospace;
+}
+
+[data-callout-body] p {
+  font-size: inherit;
+  color: var(--callout-text, var(--text));
+}
+
+/* === Information === */
+[data-callout-type="note"] {
+  --callout-color: var(--blue);
+  background-color: color-mix(in srgb, var(--blue), transparent 88%);
+  border-color: color-mix(in srgb, var(--blue), transparent 40%);
+}
+
+[data-callout-type="abstract"],
+[data-callout-type="summary"],
+[data-callout-type="tldr"] {
+  --callout-color: var(--sky);
+  background-color: color-mix(in srgb, var(--sky), transparent 88%);
+  border-color: color-mix(in srgb, var(--sky), transparent 40%);
+}
+
+[data-callout-type="info"] {
+  --callout-color: var(--sapphire);
+  background-color: color-mix(in srgb, var(--sapphire), transparent 88%);
+  border-color: color-mix(in srgb, var(--sapphire), transparent 40%);
+}
+
+/* === Advice & Tasks === */
+[data-callout-type="tip"],
+[data-callout-type="hint"],
+[data-callout-type="important"] {
+  --callout-color: var(--teal);
+  background-color: color-mix(in srgb, var(--teal), transparent 88%);
+  border-color: color-mix(in srgb, var(--teal), transparent 40%);
+}
+
+[data-callout-type="success"],
+[data-callout-type="check"],
+[data-callout-type="done"] {
+  --callout-color: var(--green);
+  background-color: color-mix(in srgb, var(--green), transparent 88%);
+  border-color: color-mix(in srgb, var(--green), transparent 40%);
+}
+
+[data-callout-type="question"],
+[data-callout-type="help"],
+[data-callout-type="faq"] {
+  --callout-color: var(--yellow);
+  background-color: color-mix(in srgb, var(--yellow), transparent 88%);
+  border-color: color-mix(in srgb, var(--yellow), transparent 40%);
+}
+
+[data-callout-type="todo"] {
+  --callout-color: var(--lavender);
+  background-color: color-mix(in srgb, var(--lavender), transparent 88%);
+  border-color: color-mix(in srgb, var(--lavender), transparent 40%);
+}
+
+/* === Warnings === */
+[data-callout-type="warning"],
+[data-callout-type="caution"],
+[data-callout-type="attention"] {
+  --callout-color: var(--peach);
+  background-color: color-mix(in srgb, var(--peach), transparent 88%);
+  border-color: color-mix(in srgb, var(--peach), transparent 40%);
+}
+
+[data-callout-type="failure"],
+[data-callout-type="fail"],
+[data-callout-type="missing"] {
+  --callout-color: var(--maroon);
+  background-color: color-mix(in srgb, var(--maroon), transparent 88%);
+  border-color: color-mix(in srgb, var(--maroon), transparent 40%);
+}
+
+[data-callout-type="danger"],
+[data-callout-type="error"] {
+  --callout-color: var(--red);
+  background-color: color-mix(in srgb, var(--red), transparent 88%);
+  border-color: color-mix(in srgb, var(--red), transparent 40%);
+}
+
+[data-callout-type="bug"] {
+  --callout-color: var(--red);
+  background-color: color-mix(in srgb, var(--red), transparent 88%);
+  border-color: color-mix(in srgb, var(--red), transparent 40%);
+}
+
+/* === Examples === */
+[data-callout-type="example"] {
+  --callout-color: var(--mauve);
+  background-color: color-mix(in srgb, var(--mauve), transparent 88%);
+  border-color: color-mix(in srgb, var(--mauve), transparent 40%);
+}
+
+[data-callout-type="quote"],
+[data-callout-type="cite"] {
+  --callout-color: var(--overlay2);
+  background-color: color-mix(in srgb, var(--overlay2), transparent 88%);
+  border-color: color-mix(in srgb, var(--overlay2), transparent 40%);
+}
+
+/* Title color from callout color */
+.prose [data-callout] [data-callout-title] {
+  color: var(--callout-color);
+}
+
+/* Information */
+[data-callout-type="note"] [data-callout-title]::before {
+  content: "[i]";
+}
+
+[data-callout-type="abstract"] [data-callout-title]::before,
+[data-callout-type="summary"] [data-callout-title]::before,
+[data-callout-type="tldr"] [data-callout-title]::before {
+  content: "[~]";
+}
+
+[data-callout-type="info"] [data-callout-title]::before {
+  content: "[i]";
+}
+
+/* Advice & Tasks */
+[data-callout-type="tip"] [data-callout-title]::before,
+[data-callout-type="hint"] [data-callout-title]::before,
+[data-callout-type="important"] [data-callout-title]::before {
+  content: "[*]";
+}
+
+[data-callout-type="success"] [data-callout-title]::before,
+[data-callout-type="check"] [data-callout-title]::before,
+[data-callout-type="done"] [data-callout-title]::before {
+  content: "[+]";
+}
+
+[data-callout-type="question"] [data-callout-title]::before,
+[data-callout-type="help"] [data-callout-title]::before,
+[data-callout-type="faq"] [data-callout-title]::before {
+  content: "[?]";
+}
+
+[data-callout-type="todo"] [data-callout-title]::before {
+  content: "[ ]";
+}
+
+/* Warnings */
+[data-callout-type="warning"] [data-callout-title]::before,
+[data-callout-type="caution"] [data-callout-title]::before,
+[data-callout-type="attention"] [data-callout-title]::before {
+  content: "[!]";
+}
+
+[data-callout-type="failure"] [data-callout-title]::before,
+[data-callout-type="fail"] [data-callout-title]::before,
+[data-callout-type="missing"] [data-callout-title]::before {
+  content: "[-]";
+}
+
+[data-callout-type="danger"] [data-callout-title]::before,
+[data-callout-type="error"] [data-callout-title]::before {
+  content: "[x]";
+}
+
+[data-callout-type="bug"] [data-callout-title]::before {
+  content: "[#]";
+}
+
+/* Examples */
+[data-callout-type="example"] [data-callout-title]::before {
+  content: "[>]";
+}
+
+[data-callout-type="quote"] [data-callout-title]::before,
+[data-callout-type="cite"] [data-callout-title]::before {
+  content: '[""]';
 }
